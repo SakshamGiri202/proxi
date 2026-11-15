@@ -1,14 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Project, Meeting } from '@/types';
+import type { Project, Meeting, User } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { getCurrentUser, onAuthStateChange, signInAsGuest, signOut } from '@/lib/auth';
 import { Navbar } from '@/components/Navbar';
 import { LandingPage } from '@/components/LandingPage';
 import { WorkspaceDashboard } from '@/components/WorkspaceDashboard';
 import { MeetingRoom } from '@/components/MeetingRoom';
 import { NewProjectModal } from '@/components/NewProjectModal';
+import { AuthModal } from '@/components/AuthModal';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'landing' | 'workspace' | 'meeting'>('landing');
+  const [user, setUser] = useState<User | null>(getCurrentUser());
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
@@ -17,6 +21,14 @@ export default function App() {
     meeting: Meeting;
   } | null>(null);
   const [showNewProjectModal, setShowNewProjectModal] = useState<boolean>(false);
+
+  // Subscribe to auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChange((currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Fetch initial data
   const loadData = useCallback(async () => {
@@ -43,6 +55,25 @@ export default function App() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  function handleNavigate(view: 'landing' | 'workspace' | 'meeting') {
+    if (view === 'workspace' && !user) {
+      // If user isn't authenticated yet, open Auth modal (or let them guest in)
+      setShowAuthModal(true);
+      return;
+    }
+    setCurrentView(view);
+  }
+
+  function handleGuestAccess() {
+    signInAsGuest();
+    setCurrentView('workspace');
+  }
+
+  function handleSignOut() {
+    signOut();
+    setCurrentView('landing');
+  }
 
   function handleLaunchMeeting(project: Project, meeting: Meeting) {
     setActiveMeetingData({ project, meeting });
@@ -100,7 +131,6 @@ export default function App() {
     setSelectedProjectId(projectId);
 
     if (launchMeetingNow) {
-      // Find created project and meeting
       const { data: updatedProjects } = await supabase.from('projects').select('*');
       const { data: updatedMeetings } = await supabase.from('meetings').select('*');
 
@@ -120,12 +150,15 @@ export default function App() {
 
   return (
     <div className="proxi-app-root">
-      {/* Global Navigation Bar (hidden during active meeting for focus) */}
+      {/* Global Navigation Bar */}
       {currentView !== 'meeting' && (
         <Navbar
           currentView={currentView}
-          onChangeView={setCurrentView}
+          onChangeView={handleNavigate}
           onOpenNewProject={() => setShowNewProjectModal(true)}
+          user={user}
+          onOpenAuth={() => setShowAuthModal(true)}
+          onSignOut={handleSignOut}
         />
       )}
 
@@ -133,14 +166,17 @@ export default function App() {
       {currentView === 'landing' && (
         <LandingPage
           onOpenSetup={() => setShowNewProjectModal(true)}
-          onGoToWorkspace={() => setCurrentView('workspace')}
+          onGoToWorkspace={() => handleNavigate('workspace')}
           onLaunchDemo={handleLaunchDemo}
+          onOpenAuth={() => setShowAuthModal(true)}
+          onGuestAccess={handleGuestAccess}
         />
       )}
 
       {/* View 2: Workspace Dashboard */}
       {currentView === 'workspace' && (
         <WorkspaceDashboard
+          user={user}
           projects={projects}
           meetings={meetings}
           selectedProjectId={selectedProjectId}
@@ -148,6 +184,7 @@ export default function App() {
           onRefreshData={loadData}
           onLaunchMeeting={handleLaunchMeeting}
           onOpenNewProjectModal={() => setShowNewProjectModal(true)}
+          onOpenAuthModal={() => setShowAuthModal(true)}
         />
       )}
 
@@ -161,11 +198,22 @@ export default function App() {
         />
       )}
 
-      {/* New Project & Meeting Setup Modal */}
+      {/* New Project & Meeting Setup Modal with AI Talk Auto-Fill */}
       {showNewProjectModal && (
         <NewProjectModal
           onClose={() => setShowNewProjectModal(false)}
           onSuccess={handleNewProjectSuccess}
+        />
+      )}
+
+      {/* Authentication Portal Modal with 1-Click Guest Sign-In */}
+      {showAuthModal && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={() => {
+            setCurrentView('workspace');
+          }}
         />
       )}
     </div>

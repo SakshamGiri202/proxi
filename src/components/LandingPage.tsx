@@ -8,12 +8,15 @@ import {
   Sparkles,
   Video,
   X,
+  Shield,
 } from 'lucide-react';
 
 interface LandingPageProps {
   onOpenSetup: () => void;
   onGoToWorkspace: () => void;
   onLaunchDemo: () => void;
+  onOpenAuth: () => void;
+  onGuestAccess: () => void;
 }
 
 const features = [
@@ -44,6 +47,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenSetup,
   onGoToWorkspace,
   onLaunchDemo,
+  onOpenAuth,
+  onGuestAccess,
 }) => {
   const [showDemoModal, setShowDemoModal] = useState(false);
 
@@ -65,12 +70,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <em>keep talking.</em>
             </h1>
             <p>
-              Proxi is your AI meeting representative. It joins the calls you cannot, briefs
-              stakeholders with confidence, and gives your team back the time to build.
+              Proxi is your AI meeting representative. Powered by voice agents that join scheduled calls,
+              deliver briefings with context, and give your team back the time to build.
             </p>
             <div className="hero-actions">
               <button className="dark-button" onClick={onOpenSetup}>
                 Meet Proxi <ArrowRight size={16} />
+              </button>
+              <button className="guest-quick-pill" onClick={onGuestAccess} title="Explore workspace without signing up">
+                <Shield size={14} /> Try Guest Mode
               </button>
               <button className="play-button" onClick={onLaunchDemo}>
                 <span>
@@ -86,9 +94,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span>RS</span>
               </div>
               <span>
-                Trusted by project teams
+                Trusted by fast-moving teams
                 <br />
-                who move fast
+                Connected with Bolna Voice AI
               </span>
             </div>
           </div>
@@ -96,7 +104,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           {/* Interactive Hero Visual */}
           <div className="hero-visual">
             <div className="visual-glow" />
-            <div className="visual-card interactive-hero-card" onClick={onLaunchDemo} title="Click to enter Live Meeting Simulation">
+            <div
+              className="visual-card interactive-hero-card"
+              onClick={onLaunchDemo}
+              title="Click to enter Live Meeting Simulation"
+            >
               <div className="visual-top">
                 <div>
                   <span className="live-label">
@@ -170,8 +182,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <span className="signal-label">ONE REPRESENTATIVE. EVERY IMPORTANT CONVERSATION.</span>
           <div className="signal-rule" />
           <p>
-            From project updates to stakeholder questions, Proxi keeps the thread intact when you
-            cannot be there.
+            From scheduled Google Meet syncs to automated Bolna phone calls, Proxi keeps the thread
+            intact when you cannot be there.
           </p>
         </section>
 
@@ -192,7 +204,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className="step-number">1</span>
               <div>
                 <h3>Give Proxi the context</h3>
-                <p>Upload your project brief, latest progress, and the questions that matter.</p>
+                <p>Talk or paste your project brief, latest progress, and the questions that matter.</p>
               </div>
             </div>
             <div className="step-connector" />
@@ -200,7 +212,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className="step-number">2</span>
               <div>
                 <h3>Set the meeting</h3>
-                <p>Connect a Google Meet link and tell Proxi who will be in the room.</p>
+                <p>Connect Google Meet or dispatch Bolna phone briefings directly to stakeholders.</p>
               </div>
             </div>
             <div className="step-connector" />
@@ -280,6 +292,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <button className="light-button" onClick={onOpenSetup}>
                   Start with your project <ArrowRight size={16} />
                 </button>
+                <button className="cta-workspace-link" onClick={onGuestAccess}>
+                  Explore as Guest (No Login Required) →
+                </button>
                 <button className="cta-workspace-link" onClick={onGoToWorkspace}>
                   Go to Workspace →
                 </button>
@@ -302,12 +317,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <span>Project intelligence, with a human voice.</span>
         <div>
           <button onClick={() => scrollTo('features')}>Features</button>
+          <button onClick={onOpenAuth}>Sign In</button>
+          <button onClick={onGuestAccess}>Guest Access</button>
           <button onClick={onGoToWorkspace}>Workspace</button>
           <button onClick={onLaunchDemo}>Demo Room</button>
         </div>
       </footer>
 
-      {/* Demo Modal (if opened directly from footer or elsewhere) */}
+      {/* Demo Modal */}
       {showDemoModal && (
         <div className="demo-backdrop" onMouseDown={() => setShowDemoModal(false)}>
           <div className="demo-modal" onMouseDown={(event) => event.stopPropagation()}>

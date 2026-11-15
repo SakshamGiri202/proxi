@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Project, Meeting } from '@/types';
 import { generateBriefingScript, generateStakeholderResponse } from '@/lib/briefingGenerator';
+import { BolnaCallModal } from './BolnaCallModal';
 import {
   Mic,
   MicOff,
   Video,
   VideoOff,
   PhoneOff,
+  PhoneCall,
   Volume2,
   VolumeX,
   Sparkles,
@@ -50,6 +52,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
   const [customQuestion, setCustomQuestion] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(48);
+  const [showBolnaCall, setShowBolnaCall] = useState(false);
 
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([
     {
@@ -269,6 +272,14 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
               <span>{copiedLink ? 'Copied' : 'Meet Link'}</span>
             </button>
           )}
+          <button
+            className="copy-link-btn"
+            onClick={() => setShowBolnaCall(true)}
+            title="Dispatch phone call via Bolna Voice Agent (15c8ef59...)"
+          >
+            <PhoneCall size={14} />
+            <span>Call via Bolna</span>
+          </button>
           <button
             className={`tts-toggle-btn ${ttsEnabled ? 'active' : ''}`}
             onClick={() => {
@@ -582,6 +593,26 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
           </button>
         </div>
       </footer>
+
+      {/* Bolna Call Modal */}
+      {showBolnaCall && (
+        <BolnaCallModal
+          project={project}
+          onClose={() => setShowBolnaCall(false)}
+          onCallDispatched={(execId, phone) => {
+            setTranscript((prev) => [
+              ...prev,
+              {
+                speaker: 'Bolna Voice AI',
+                role: 'Outbound Agent (15c8ef59...)',
+                text: `Dispatched voice call to ${phone} with project briefing context. Execution ID: ${execId}`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                isAi: true,
+              },
+            ]);
+          }}
+        />
+      )}
     </div>
   );
 };

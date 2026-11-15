@@ -27,3 +27,47 @@ export interface Meeting {
   action_items?: string[];
   transcript?: Array<{ speaker: string; text: string; time: string; isAi?: boolean }>;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  isGuest: boolean;
+  avatarUrl?: string;
+  createdAt: string;
+}
+
+export interface WorkspaceActivity {
+  id: string;
+  type: 'briefing_delivered' | 'call_scheduled' | 'blocker_logged' | 'bolna_call' | 'decision_captured' | 'project_created';
+  title: string;
+  description: string;
+  project_id?: string;
+  project_name?: string;
+  timestamp: string;
+  author: string;
+}
+
+export interface BolnaAgent {
+  id: string;
+  agent_name: string;
+  agent_status: string;
+  agent_welcome_message: string;
+  agent_type?: string;
+}
+
+export interface ExtractedProjectForm {
+  projectName: string;
+  clientName: string;
+  description: string;
+  progressSummary: string;
+  openIssues: string;
+  githubUrl: string;
+  managementUrl: string;
+  meetingTitle: string;
+  meetingAt: string;
+  meetUrl: string;
+  attendees: string;
+  agenda: string;
+}

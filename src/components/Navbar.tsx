@@ -1,23 +1,50 @@
 import React, { useState } from 'react';
-import { Sparkles, Video, LayoutDashboard, Plus, Menu, X, Globe } from 'lucide-react';
+import {
+  Sparkles,
+  Video,
+  LayoutDashboard,
+  Plus,
+  Menu,
+  X,
+  Globe,
+  LogOut,
+  User as UserIcon,
+  Shield,
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import type { User } from '@/types';
 
 interface NavbarProps {
   currentView: 'landing' | 'workspace' | 'meeting';
   onChangeView: (view: 'landing' | 'workspace' | 'meeting') => void;
   onOpenNewProject: () => void;
+  user: User | null;
+  onOpenAuth: () => void;
+  onSignOut: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentView,
   onChangeView,
   onOpenNewProject,
+  user,
+  onOpenAuth,
+  onSignOut,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   function handleNav(view: 'landing' | 'workspace' | 'meeting') {
     onChangeView(view);
     setMobileMenuOpen(false);
+  }
+
+  function getInitials(name: string) {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   }
 
   return (
@@ -67,6 +94,27 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Plus size={15} /> New Project
             </button>
+            {!user ? (
+              <button
+                className="light-button full-width"
+                onClick={() => {
+                  onOpenAuth();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                Sign In / Guest Access
+              </button>
+            ) : (
+              <button
+                className="outline-button full-width"
+                onClick={() => {
+                  onSignOut();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <LogOut size={14} /> Sign Out ({user.name})
+              </button>
+            )}
           </div>
         </nav>
 
@@ -76,7 +124,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="storage-status-chip"
             title={
               supabase.isLocalMode
-                ? 'Running in local reactive mode (no Supabase env required)'
+                ? 'Running with local reactive data (Supabase optional)'
                 : 'Connected to Supabase cloud'
             }
           >
@@ -86,6 +134,43 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button className="dark-button new-project-nav-btn" onClick={onOpenNewProject}>
             <Plus size={14} /> New Project
           </button>
+
+          {/* User Profile or Sign In / Guest Button */}
+          {user ? (
+            <div className="navbar-user-profile">
+              <div
+                className={`user-avatar-badge ${user.isGuest ? 'guest' : ''}`}
+                title={`${user.name} (${user.email})`}
+              >
+                {getInitials(user.name)}
+              </div>
+              <div className="user-details-dropdown">
+                <span className="user-name-label">{user.name}</span>
+                <span className="user-role-label">
+                  {user.isGuest ? (
+                    <span className="guest-tag-inline">
+                      <Shield size={10} /> Guest
+                    </span>
+                  ) : (
+                    'Pro Account'
+                  )}
+                </span>
+              </div>
+              <button
+                className="sign-out-btn"
+                onClick={onSignOut}
+                title="Sign out of workspace"
+                aria-label="Sign Out"
+              >
+                <LogOut size={14} />
+              </button>
+            </div>
+          ) : (
+            <button className="nav-login-btn" onClick={onOpenAuth}>
+              <UserIcon size={14} />
+              <span>Sign In / Guest</span>
+            </button>
+          )}
 
           <button
             className="menu-toggle"
