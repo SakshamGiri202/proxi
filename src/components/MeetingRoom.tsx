@@ -120,16 +120,22 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     }
 
     window.speechSynthesis.cancel();
+
+    const voices = window.speechSynthesis.getVoices();
     const utterance = new SpeechSynthesisUtterance(text);
+
+    // Pick the best available English voice
+    if (voices.length > 0) {
+      const naturalVoice = voices.find(
+        (v) => (v.lang.startsWith('en') && v.name.includes('Natural')) || v.name.includes('Google') || v.name.includes('Microsoft')
+      );
+      if (naturalVoice) {
+        utterance.voice = naturalVoice;
+      }
+    }
+
     utterance.rate = 1.0;
     utterance.pitch = 1.05;
-
-    // Pick English voice if available
-    const voices = window.speechSynthesis.getVoices();
-    const naturalVoice = voices.find(
-      (v) => (v.lang.startsWith('en') && v.name.includes('Natural')) || v.name.includes('Google')
-    );
-    if (naturalVoice) utterance.voice = naturalVoice;
 
     setIsSpeaking(true);
     setCurrentSubtitle(text);

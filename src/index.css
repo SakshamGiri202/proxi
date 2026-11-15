@@ -23,6 +23,19 @@ button:focus-visible { outline: 3px solid #86c8b5; outline-offset: 3px; }
 @media (max-width: 650px) { .landing-nav { height: 68px; padding: 0 20px; }.nav-links, .nav-actions { display: none; }.menu-toggle { display: block; }.nav-links.open { position: absolute; z-index: 4; top: 68px; left: 0; right: 0; display: flex; flex-direction: column; gap: 0; margin: 0; padding: 12px 20px 18px; background: #f8f9f6; border-bottom: 1px solid #dfe9e5; }.nav-links.open button { padding: 12px 0; text-align: left; }.hero-section, .signal-section, .how-section, .feature-section, .cta-inner, .landing-footer { padding-left: 20px; padding-right: 20px; }.hero-section { padding-top: 52px; padding-bottom: 60px; }.hero-copy h1 { letter-spacing: -2.5px; }.hero-copy > p { font-size: 14px; }.trust-line { margin-top: 38px; }.hero-visual { min-height: 380px; }.visual-card { padding: 17px; }.floating-note { top: 26px; }.floating-calendar { bottom: 15px; }.signal-section { display: block; padding-bottom: 60px; }.signal-rule { margin: 17px 0; }.how-section, .feature-section { padding-top: 72px; padding-bottom: 72px; }.section-heading h2, .feature-intro h2, .cta-inner h2 { font-size: 31px; }.steps { flex-direction: column; gap: 16px; margin-top: 40px; }.step-connector { display: none; }.feature-section { display: block; }.feature-list { margin-top: 40px; }.quote-section { margin-bottom: 72px; padding-left: 20px; padding-right: 20px; }.quote-section blockquote { font-size: 19px; }.cta-inner { display: block; padding-top: 60px; padding-bottom: 60px; }.cta-side { margin-top: 28px; }.landing-footer { height: auto; padding-top: 26px; padding-bottom: 26px; flex-wrap: wrap; gap: 12px; }.landing-footer > div { width: 100%; margin: 7px 0 0; }.demo-modal { padding: 32px; } }
 
 /* =========================================================
+   MEETING OVERLAY
+   ========================================================= */
+.meeting-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+/* =========================================================
    GLOBAL NAVBAR STYLES
    ========================================================= */
 .global-navbar {
