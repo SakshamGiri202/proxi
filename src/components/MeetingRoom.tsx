@@ -43,10 +43,13 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
   onExit,
   onUpdateMeeting,
 }) => {
-  const [micActive, setMicActive] = useState(true);
-  const [cameraActive, setCameraActive] = useState(true);
+  const [micActive, setMicActive] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const micStreamRef = useRef<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const camStreamRef = useRef<MediaStream | null>(null);
   const [currentSubtitle, setCurrentSubtitle] = useState('');
   const [activeSideTab, setActiveSideTab] = useState<'transcript' | 'qa' | 'notes'>('transcript');
   const [customQuestion, setCustomQuestion] = useState('');
@@ -105,7 +108,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     return `${mins.toString().padStart(2, '0')}:${rem.toString().padStart(2, '0')}`;
   }
 
-  // Voice speech synthesis
+  // Voice speech synthesis with best-quality voice selection
   function speakText(text: string, onEnd?: () => void) {
     if (!ttsEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) {
       setIsSpeaking(true);
@@ -121,39 +124,102 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
 
     window.speechSynthesis.cancel();
 
-    const voices = window.speechSynthesis.getVoices();
-    const utterance = new SpeechSynthesisUtterance(text);
+    const trySpeak = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const utterance = new SpeechSynthesisUtterance(text);
 
-    // Pick the best available English voice
-    if (voices.length > 0) {
-      const naturalVoice = voices.find(
-        (v) => (v.lang.startsWith('en') && v.name.includes('Natural')) || v.name.includes('Google') || v.name.includes('Microsoft')
-      );
-      if (naturalVoice) {
-        utterance.voice = naturalVoice;
+      // Priority: Google/Microsoft natural English voices, then any en-US, then any en
+      const preferredVoice =
+        voices.find((v) => v.lang === 'en-US' && v.name.includes('Google US English')) ||
+        voices.find((v) => v.lang === 'en-US' && v.name.toLowerCase().includes('natural')) ||
+        voices.find((v) => v.lang === 'en-US' && v.name.includes('Microsoft')) ||
+        voices.find((v) => v.lang === 'en-US' && v.name.includes('Samantha')) ||
+        voices.find((v) => v.lang === 'en-US' && !v.localService) ||
+        voices.find((v) => v.lang === 'en-US') ||
+        voices.find((v) => v.lang.startsWith('en'));
+
+      if (preferredVoice) utterance.voice = preferredVoice;
+      utterance.rate = 0.92;   // Slightly slower — clearer for briefings
+      utterance.pitch = 1.05;
+      utterance.volume = 1.0;
+
+      setIsSpeaking(true);
+      setCurrentSubtitle(text);
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        setCurrentSubtitle('');
+        if (onEnd) onEnd();
+      };
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        setCurrentSubtitle('');
+        if (onEnd) onEnd();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    };
+
+    // Voices may not be loaded yet — wait for them
+    if (window.speechSynthesis.getVoices().length > 0) {
+      trySpeak();
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.onvoiceschanged = null;
+        trySpeak();
+      };
+    }
+  }
+
+  // Real microphone toggle
+  async function handleToggleMic() {
+    if (micActive) {
+      micStreamRef.current?.getTracks().forEach((t) => t.stop());
+      micStreamRef.current = null;
+      setMicActive(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        micStreamRef.current = stream;
+        setMicActive(true);
+      } catch {
+        alert('Microphone permission denied. Please allow mic access in your browser settings and try again.');
       }
     }
-
-    utterance.rate = 1.0;
-    utterance.pitch = 1.05;
-
-    setIsSpeaking(true);
-    setCurrentSubtitle(text);
-
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      setCurrentSubtitle('');
-      if (onEnd) onEnd();
-    };
-
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-      setCurrentSubtitle('');
-      if (onEnd) onEnd();
-    };
-
-    window.speechSynthesis.speak(utterance);
   }
+
+  // Real camera toggle
+  async function handleToggleCamera() {
+    if (cameraActive) {
+      camStreamRef.current?.getTracks().forEach((t) => t.stop());
+      camStreamRef.current = null;
+      if (videoRef.current) videoRef.current.srcObject = null;
+      setCameraActive(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        camStreamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+        setCameraActive(true);
+      } catch {
+        alert('Camera permission denied. Please allow camera access in your browser settings.');
+      }
+    }
+  }
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      micStreamRef.current?.getTracks().forEach((t) => t.stop());
+      camStreamRef.current?.getTracks().forEach((t) => t.stop());
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   // Deliver the main briefing
   function handleDeliverBriefing() {
@@ -384,7 +450,14 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
           {/* Tile 4: You (Observer / Team Lead) */}
           <div className="video-tile user-tile">
             {cameraActive ? (
-              <div className="tile-avatar-placeholder host-avatar">YOU</div>
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                className="user-camera-feed"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
+              />
             ) : (
               <div className="cam-off-box">
                 <VideoOff size={24} />
@@ -567,14 +640,14 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
         <div className="controls-left">
           <button
             className={`control-circle ${!micActive ? 'muted' : ''}`}
-            onClick={() => setMicActive(!micActive)}
+            onClick={handleToggleMic}
             title={micActive ? 'Mute Mic' : 'Unmute Mic'}
           >
             {micActive ? <Mic size={18} /> : <MicOff size={18} />}
           </button>
           <button
             className={`control-circle ${!cameraActive ? 'muted' : ''}`}
-            onClick={() => setCameraActive(!cameraActive)}
+            onClick={handleToggleCamera}
             title={cameraActive ? 'Turn Camera Off' : 'Turn Camera On'}
           >
             {cameraActive ? <Video size={18} /> : <VideoOff size={18} />}

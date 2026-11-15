@@ -153,7 +153,7 @@ export default function App() {
       {/* Meeting Overlay - blocks background interaction when in meeting mode */}
       {currentView === 'meeting' && activeMeetingData && (
         <div className="meeting-overlay" onClick={handleExitMeeting} />
-      )
+      )}
 
       {/* Global Navigation Bar */}
       {currentView !== 'meeting' && (
@@ -165,7 +165,7 @@ export default function App() {
           onOpenAuth={() => setShowAuthModal(true)}
           onSignOut={handleSignOut}
         />
-      )
+      )}
 
       {/* View 1: Landing Page */}
       {currentView === 'landing' && (
@@ -176,7 +176,7 @@ export default function App() {
           onOpenAuth={() => setShowAuthModal(true)}
           onGuestAccess={handleGuestAccess}
         />
-      )
+      )}
 
       {/* View 2: Workspace Dashboard */}
       {currentView === 'workspace' && (
@@ -191,7 +191,7 @@ export default function App() {
           onOpenNewProjectModal={() => setShowNewProjectModal(true)}
           onOpenAuthModal={() => setShowAuthModal(true)}
         />
-      )
+      )}
 
       {/* View 3: Live Meeting Room */}
       {currentView === 'meeting' && activeMeetingData && (
@@ -201,7 +201,7 @@ export default function App() {
           onExit={handleExitMeeting}
           onUpdateMeeting={handleUpdateMeeting}
         />
-      )
+      )}
 
       {/* New Project & Meeting Setup Modal with AI Talk Auto-Fill */}
       {showNewProjectModal && (
@@ -209,6 +209,7 @@ export default function App() {
           onClose={() => setShowNewProjectModal(false)}
           onSuccess={handleNewProjectSuccess}
         />
+      )}
 
       {/* Authentication Portal Modal with 1-Click Guest Sign-In */}
       {showAuthModal && (
