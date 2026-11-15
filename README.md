@@ -200,11 +200,7 @@ cp .env.example .env
 
 Configure the following variables in `.env`:
 
-```env
-# Bolna Voice AI Platform
-VITE_BOLNA_API_KEY=bn-ce336b8c720a4b32b1cb05749f506b8d
-VITE_BOLNA_API_KEY_NAME=plum-julia-3830
-VITE_BOLNA_AGENT_ID=15c8ef59-5bb4-4b33-b263-14f7faa21c23
+```
 
 # Supabase (Optional - Local storage fallback is enabled by default)
 VITE_SUPABASE_URL=https://your-project.supabase.co
